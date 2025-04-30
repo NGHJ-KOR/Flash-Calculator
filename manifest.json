@@ -1,0 +1,16 @@
+
+{
+  "name": "Flash Calculator",
+  "short_name": "FlashCalc",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "flash-icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

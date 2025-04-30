@@ -1,0 +1,97 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>슈퍼 플래시 계산기 (PWA)</title>
+  <link rel="icon" href="flash-icon.png" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#4f46e5" />
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('service-worker.js');
+      });
+    }
+  </script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f9fafb; transition: background 0.3s, color 0.3s; }
+    input, button { padding: 12px; margin: 8px 0; width: 100%; font-size: 1rem; border: 1px solid #ccc; border-radius: 6px; }
+    button { background-color: #4f46e5; color: white; border: none; cursor: pointer; }
+    button:hover { background-color: #4338ca; }
+    .result, .table-container { margin-top: 20px; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); font-size: 1.1rem; color: #333; }
+    h1 { text-align: center; }
+    .dark-mode { background: #111827; color: #f3f4f6; }
+    .dark-mode input, .dark-mode button { border: 1px solid #374151; }
+    .dark-mode .result, .dark-mode .table-container { background: #1f2937; color: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <h1>슈퍼 플래시 스마트 계산기</h1>
+  <input type="number" id="guideNumber" placeholder="가이드 넘버 (GN)" value="8">
+  <input type="number" id="distance" step="0.1" placeholder="거리 (m)">
+  <input type="number" id="aperture" step="0.1" placeholder="조리개 (f/)">
+  <input type="number" id="iso" step="1" placeholder="ISO">
+  
+  <button onclick="smartCalculate()">계산하기</button>
+  <button onclick="copyResult()">결과 복사</button>
+  <button onclick="toggleTheme()">다크모드</button>
+
+  <div class="result" id="result"></div>
+  <div class="table-container" id="tableContainer"></div>
+
+  <script>
+    function smartCalculate() {
+      const guideNumber = parseFloat(document.getElementById('guideNumber').value);
+      const distance = parseFloat(document.getElementById('distance').value);
+      const aperture = parseFloat(document.getElementById('aperture').value);
+      const iso = parseFloat(document.getElementById('iso').value);
+
+      const filled = [!isNaN(distance), !isNaN(aperture), !isNaN(iso)].filter(Boolean).length;
+      if (filled < 2) {
+        document.getElementById('result').innerHTML = '<strong style="color:red;">거리, 조리개, ISO 중 2개 이상 입력해주세요.</strong>';
+        document.getElementById('tableContainer').innerHTML = '';
+        return;
+      }
+
+      let newGN = guideNumber;
+      if (!isNaN(iso)) newGN = guideNumber * Math.sqrt(iso / 100);
+
+      let output = '';
+      if (!isNaN(distance) && !isNaN(aperture)) {
+        const neededGN = distance * aperture;
+        const neededISO = Math.round(((neededGN / guideNumber) ** 2) * 100);
+        output = `✨ 필요한 ISO: <strong>ISO ${neededISO}</strong>`;
+      } else if (!isNaN(distance) && !isNaN(iso)) {
+        const suggestedAperture = (newGN / distance).toFixed(1);
+        output = `✨ 추천 조리개: <strong>f/${suggestedAperture}</strong>`;
+      } else if (!isNaN(aperture) && !isNaN(iso)) {
+        const suggestedDistance = (newGN / aperture).toFixed(1);
+        output = `✨ 적정 거리: <strong>${suggestedDistance} m</strong>`;
+      }
+
+      document.getElementById('result').innerHTML = output;
+
+      if (!isNaN(iso)) {
+        let tableHTML = '<h3>거리별 추천 조리개</h3><table><tr><th>거리 (m)</th><th>추천 조리개 (f/)</th></tr>';
+        for (let d = 1; d <= 5; d++) {
+          let fValue = (newGN / d).toFixed(1);
+          tableHTML += `<tr><td>${d}</td><td>f/${fValue}</td></tr>`;
+        }
+        tableHTML += '</table>';
+        document.getElementById('tableContainer').innerHTML = tableHTML;
+      }
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle('dark-mode');
+    }
+
+    function copyResult() {
+      const resultText = document.getElementById('result').innerText;
+      navigator.clipboard.writeText(resultText).then(() => alert('복사 완료!'));
+    }
+  </script>
+</body>
+</html>
